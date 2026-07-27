@@ -72,84 +72,20 @@ jobs:
         run: npm run audit:content
 
       - name: Typecheck
-        id: typecheck
-        continue-on-error: true
         working-directory: /tmp/mnemora-project
-        shell: bash
-        run: npm run typecheck > /tmp/mnemora-typecheck.log 2>&1
-
-      - name: Upload TypeScript diagnostics
-        if: steps.typecheck.outcome == 'failure'
-        uses: actions/upload-artifact@v4
-        with:
-          name: mnemora-typecheck-diagnostics
-          path: /tmp/mnemora-typecheck.log
-          if-no-files-found: error
-          retention-days: 1
-
-      - name: Stop on TypeScript errors
-        if: steps.typecheck.outcome == 'failure'
-        run: exit 1
+        run: npm run typecheck
 
       - name: Lint
-        id: lint
-        continue-on-error: true
         working-directory: /tmp/mnemora-project
-        shell: bash
-        run: npm run lint > /tmp/mnemora-lint.log 2>&1
-
-      - name: Upload ESLint diagnostics
-        if: steps.lint.outcome == 'failure'
-        uses: actions/upload-artifact@v4
-        with:
-          name: mnemora-lint-diagnostics
-          path: /tmp/mnemora-lint.log
-          if-no-files-found: error
-          retention-days: 1
-
-      - name: Stop on ESLint errors
-        if: steps.lint.outcome == 'failure'
-        run: exit 1
+        run: npm run lint
 
       - name: Test
-        id: test
-        continue-on-error: true
         working-directory: /tmp/mnemora-project
-        shell: bash
-        run: npm run test > /tmp/mnemora-test.log 2>&1
-
-      - name: Upload test diagnostics
-        if: steps.test.outcome == 'failure'
-        uses: actions/upload-artifact@v4
-        with:
-          name: mnemora-test-diagnostics
-          path: /tmp/mnemora-test.log
-          if-no-files-found: error
-          retention-days: 1
-
-      - name: Stop on test errors
-        if: steps.test.outcome == 'failure'
-        run: exit 1
+        run: npm run test
 
       - name: Build production application
-        id: build
-        continue-on-error: true
         working-directory: /tmp/mnemora-project
-        shell: bash
-        run: npm run build > /tmp/mnemora-build.log 2>&1
-
-      - name: Upload build diagnostics
-        if: steps.build.outcome == 'failure'
-        uses: actions/upload-artifact@v4
-        with:
-          name: mnemora-build-diagnostics
-          path: /tmp/mnemora-build.log
-          if-no-files-found: error
-          retention-days: 1
-
-      - name: Stop on build errors
-        if: steps.build.outcome == 'failure'
-        run: exit 1
+        run: npm run build
 
       - name: Record GitHub-hosted verification
         working-directory: /tmp/mnemora-project
@@ -162,36 +98,20 @@ jobs:
           The publication workflow installed all declared dependencies on Node.js 22 and passed the content audit, TypeScript typecheck, ESLint, Vitest, and the production Vite build before committing this source tree.
           EOF
 
-      - name: Replace transport repository with complete project
-        id: publish
-        continue-on-error: true
+      - name: Publish complete source while preserving workflow files
         shell: bash
         run: |
-          set +e
-          {
-            set -x
-            find "$GITHUB_WORKSPACE" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
-            cp -a /tmp/mnemora-project/. "$GITHUB_WORKSPACE"/
-            cd "$GITHUB_WORKSPACE"
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add -A
-            git commit -m "Publish complete MNEMORA source and fixes"
-            git push origin HEAD:${{ github.head_ref }}
-          } > /tmp/mnemora-publish.log 2>&1
-          status=$?
-          cat /tmp/mnemora-publish.log
-          exit $status
-
-      - name: Upload publication diagnostics
-        if: steps.publish.outcome == 'failure'
-        uses: actions/upload-artifact@v4
-        with:
-          name: mnemora-publication-diagnostics
-          path: /tmp/mnemora-publish.log
-          if-no-files-found: error
-          retention-days: 1
-
-      - name: Stop on publication error
-        if: steps.publish.outcome == 'failure'
-        run: exit 1
+          set -euo pipefail
+          mkdir -p /tmp/mnemora-transport-workflows
+          cp -a "$GITHUB_WORKSPACE/.github/workflows/." /tmp/mnemora-transport-workflows/
+          find "$GITHUB_WORKSPACE" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -a /tmp/mnemora-project/. "$GITHUB_WORKSPACE"/
+          rm -rf "$GITHUB_WORKSPACE/.github/workflows"
+          mkdir -p "$GITHUB_WORKSPACE/.github/workflows"
+          cp -a /tmp/mnemora-transport-workflows/. "$GITHUB_WORKSPACE/.github/workflows"/
+          cd "$GITHUB_WORKSPACE"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Publish complete MNEMORA source and fixes"
+          git push origin HEAD:${{ github.head_ref }}
