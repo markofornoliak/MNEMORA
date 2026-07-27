@@ -61,8 +61,27 @@ jobs:
         run: npm run audit:content
 
       - name: Typecheck
+        id: typecheck
+        continue-on-error: true
         working-directory: /tmp/mnemora-project
-        run: npm run typecheck
+        shell: bash
+        run: npm run typecheck > /tmp/mnemora-typecheck.log 2>&1
+
+      - name: Upload TypeScript diagnostics
+        if: steps.typecheck.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: mnemora-typecheck-diagnostics
+          path: /tmp/mnemora-typecheck.log
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Stop on TypeScript errors
+        if: steps.typecheck.outcome == 'failure'
+        shell: bash
+        run: |
+          tail -n 200 /tmp/mnemora-typecheck.log
+          exit 1
 
       - name: Lint
         working-directory: /tmp/mnemora-project
