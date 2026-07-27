@@ -26,24 +26,50 @@ jobs:
         with:
           node-version: 22
 
-      - name: Reconstruct and patch verified source
+      - name: Decode source payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$(find .payload -maxdepth 1 -name 'chunk-*' -print -quit)"
+          cat .payload/chunk-* | base64 --decode > /tmp/mnemora-source.tar.xz
+          test -s /tmp/mnemora-source.tar.xz
+          xz --test /tmp/mnemora-source.tar.xz
+
+      - name: Extract source payload
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p /tmp/mnemora-project
-          cat .payload/chunk-* | base64 --decode > /tmp/mnemora-source.tar.xz
           tar -xJf /tmp/mnemora-source.tar.xz --strip-components=1 -C /tmp/mnemora-project
+          test -f /tmp/mnemora-project/src/main.tsx
 
+      - name: Decode and verify audited patch
+        shell: bash
+        run: |
+          set -euo pipefail
           base64 --decode .publish-v2/patch.xz.b64 > /tmp/mnemora-v2.patch.xz
           echo "4e851f8c654f47489c922d25408c425c1e458606fc91f835d9a4e6e0905d5818  /tmp/mnemora-v2.patch.xz" | sha256sum --check --strict
           xz --decompress --stdout /tmp/mnemora-v2.patch.xz > /tmp/mnemora-v2.patch
+          test -s /tmp/mnemora-v2.patch
 
-          cd /tmp/mnemora-project
+      - name: Apply audited fixes
+        working-directory: /tmp/mnemora-project
+        shell: bash
+        run: |
+          set -euo pipefail
+          git apply --check /tmp/mnemora-v2.patch
           git apply /tmp/mnemora-v2.patch
+
+      - name: Verify complete content tree
+        working-directory: /tmp/mnemora-project
+        shell: bash
+        run: |
+          set -euo pipefail
           test -f src/main.tsx
           test -f src/components/CodeLab.tsx
           test -f .github/workflows/ci.yml
           test "$(find src/data/tracks -path '*/lessons/*.ts' | wc -l)" -eq 60
+          test "$(find . -type f ! -path './node_modules/*' ! -path './dist/*' | wc -l)" -ge 119
 
       - name: Install dependencies and run complete quality gate
         working-directory: /tmp/mnemora-project
