@@ -1,0 +1,34 @@
+name: Verify live MNEMORA redesign
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '.verify-design-pages-trigger'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-live-page:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for redesigned production bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://markofornoliak.github.io'
+          page="$base/MNEMORA/"
+          for attempt in $(seq 1 36); do
+            html="$(curl -fsSL --max-time 20 "$page" || true)"
+            asset="$(printf '%s' "$html" | grep -oE '/MNEMORA/assets/index-[^" ]+\.js' | head -n 1 || true)"
+            if [[ -n "$asset" ]] && curl -fsSL --max-time 30 "$base$asset" -o /tmp/mnemora-app.js; then
+              if grep -Fq 'Стройте системы.' /tmp/mnemora-app.js && grep -Fq '15 портфельных проектов' /tmp/mnemora-app.js; then
+                echo "Live MNEMORA redesign verified at $page"
+                exit 0
+              fi
+            fi
+            sleep 5
+          done
+          echo 'The public Pages bundle did not expose the redesigned MNEMORA content.' >&2
+          exit 1
