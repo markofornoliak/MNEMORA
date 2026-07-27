@@ -89,22 +89,67 @@ jobs:
 
       - name: Stop on TypeScript errors
         if: steps.typecheck.outcome == 'failure'
-        shell: bash
-        run: |
-          tail -n 200 /tmp/mnemora-typecheck.log
-          exit 1
+        run: exit 1
 
       - name: Lint
+        id: lint
+        continue-on-error: true
         working-directory: /tmp/mnemora-project
-        run: npm run lint
+        shell: bash
+        run: npm run lint > /tmp/mnemora-lint.log 2>&1
+
+      - name: Upload ESLint diagnostics
+        if: steps.lint.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: mnemora-lint-diagnostics
+          path: /tmp/mnemora-lint.log
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Stop on ESLint errors
+        if: steps.lint.outcome == 'failure'
+        run: exit 1
 
       - name: Test
+        id: test
+        continue-on-error: true
         working-directory: /tmp/mnemora-project
-        run: npm run test
+        shell: bash
+        run: npm run test > /tmp/mnemora-test.log 2>&1
+
+      - name: Upload test diagnostics
+        if: steps.test.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: mnemora-test-diagnostics
+          path: /tmp/mnemora-test.log
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Stop on test errors
+        if: steps.test.outcome == 'failure'
+        run: exit 1
 
       - name: Build production application
+        id: build
+        continue-on-error: true
         working-directory: /tmp/mnemora-project
-        run: npm run build
+        shell: bash
+        run: npm run build > /tmp/mnemora-build.log 2>&1
+
+      - name: Upload build diagnostics
+        if: steps.build.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: mnemora-build-diagnostics
+          path: /tmp/mnemora-build.log
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Stop on build errors
+        if: steps.build.outcome == 'failure'
+        run: exit 1
 
       - name: Record GitHub-hosted verification
         working-directory: /tmp/mnemora-project
