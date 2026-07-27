@@ -20,28 +20,37 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
+          show-progress: false
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Decode source payload
+      - name: Decode source payload with Node.js
         shell: bash
         run: |
           set -euo pipefail
-          test -n "$(find .payload -maxdepth 1 -name 'chunk-*' -print -quit)"
-          : > /tmp/mnemora-source.tar.xz
-          for part in .payload/chunk-*; do
-            base64 --decode "$part" >> /tmp/mnemora-source.tar.xz
-          done
-          test -s /tmp/mnemora-source.tar.xz
-          xz --test /tmp/mnemora-source.tar.xz
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const dir = '.payload';
+          const chunks = fs.readdirSync(dir)
+            .filter((name) => /^chunk-\d+$/.test(name))
+            .sort((a, b) => a.localeCompare(b));
+          if (!chunks.length) throw new Error('No payload chunks found');
+          const encoded = chunks.map((name) => fs.readFileSync(path.join(dir, name), 'utf8')).join('');
+          const archive = Buffer.from(encoded, 'base64');
+          if (!archive.length) throw new Error('Decoded archive is empty');
+          fs.writeFileSync('/tmp/mnemora-source.tar.xz', archive);
+          console.log(`Decoded ${chunks.length} chunks into ${archive.length} bytes`);
+          NODE
 
-      - name: Extract source payload
+      - name: Verify and extract source payload
         shell: bash
         run: |
           set -euo pipefail
+          xz --test /tmp/mnemora-source.tar.xz
           mkdir -p /tmp/mnemora-project
           tar -xJf /tmp/mnemora-source.tar.xz --strip-components=1 -C /tmp/mnemora-project
           test -f /tmp/mnemora-project/src/main.tsx
