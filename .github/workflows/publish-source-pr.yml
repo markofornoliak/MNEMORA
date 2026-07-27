@@ -52,15 +52,29 @@ jobs:
           test "$(find src/data/tracks -path '*/lessons/*.ts' | wc -l)" -eq 60
           test "$(find . -type f ! -path './node_modules/*' ! -path './dist/*' | wc -l)" -ge 119
 
-      - name: Install dependencies and run complete quality gate
+      - name: Install dependencies
         working-directory: /tmp/mnemora-project
-        run: |
-          npm install --no-audit --no-fund
-          npm run audit:content
-          npm run typecheck
-          npm run lint
-          npm run test
-          npm run build
+        run: npm install --no-audit --no-fund
+
+      - name: Audit course content
+        working-directory: /tmp/mnemora-project
+        run: npm run audit:content
+
+      - name: Typecheck
+        working-directory: /tmp/mnemora-project
+        run: npm run typecheck
+
+      - name: Lint
+        working-directory: /tmp/mnemora-project
+        run: npm run lint
+
+      - name: Test
+        working-directory: /tmp/mnemora-project
+        run: npm run test
+
+      - name: Build production application
+        working-directory: /tmp/mnemora-project
+        run: npm run build
 
       - name: Record GitHub-hosted verification
         working-directory: /tmp/mnemora-project
