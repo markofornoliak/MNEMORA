@@ -45,7 +45,7 @@ jobs:
         run: |
           set -euo pipefail
           base64 --decode "$GITHUB_WORKSPACE/.publish-v3/source-fixes.patch.xz.b64" > /tmp/mnemora-source-fixes.patch.xz
-          echo "784e1f96fcc828e96af4a4b42f3cbc4387c27e39e7b01152ba9fb56a056afe48  /tmp/mnemora-source-fixes.patch.xz" | sha256sum --check --strict
+          echo "a78dd1e3ccc0f8c950471f6b56d29f9584a0f870c49189e89f881f0faf252948  /tmp/mnemora-source-fixes.patch.xz" | sha256sum --check --strict
           xz --decompress --stdout /tmp/mnemora-source-fixes.patch.xz > /tmp/mnemora-source-fixes.patch
           git apply --check /tmp/mnemora-source-fixes.patch
           git apply /tmp/mnemora-source-fixes.patch
