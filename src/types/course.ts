@@ -59,6 +59,17 @@ export interface World {
   subtitle: string;
   description: string;
   icon: string;
+  skills: string[];
+  artifact: string;
+}
+
+export interface ProjectBrief {
+  id: string;
+  title: string;
+  summary: string;
+  duration: string;
+  difficulty: Difficulty;
+  deliverables: string[];
 }
 
 export interface Trek {
@@ -67,6 +78,11 @@ export interface Trek {
   shortName: string;
   tagline: string;
   description: string;
+  level: string;
+  estimatedHours: number;
+  outcome: string;
+  skills: string[];
+  projects: ProjectBrief[];
   runner: RunnerKind;
   editorLanguage: LanguageId;
   icon: string;
