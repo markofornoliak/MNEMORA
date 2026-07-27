@@ -1,0 +1,78 @@
+name: Publish complete MNEMORA source
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.publish-v2/trigger'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout transport repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Reconstruct and patch verified source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/mnemora-project
+          cat .payload/chunk-* | base64 --decode > /tmp/mnemora-source.tar.xz
+          tar -xJf /tmp/mnemora-source.tar.xz --strip-components=1 -C /tmp/mnemora-project
+
+          base64 --decode .publish-v2/patch.xz.b64 > /tmp/mnemora-v2.patch.xz
+          echo "4e851f8c654f47489c922d25408c425c1e458606fc91f835d9a4e6e0905d5818  /tmp/mnemora-v2.patch.xz" | sha256sum --check --strict
+          xz --decompress --stdout /tmp/mnemora-v2.patch.xz > /tmp/mnemora-v2.patch
+
+          cd /tmp/mnemora-project
+          git apply /tmp/mnemora-v2.patch
+          test -f src/main.tsx
+          test -f src/components/CodeLab.tsx
+          test -f .github/workflows/ci.yml
+          test "$(find src/data/tracks -path '*/lessons/*.ts' | wc -l)" -eq 60
+
+      - name: Install dependencies and run complete quality gate
+        working-directory: /tmp/mnemora-project
+        run: |
+          npm install --no-audit --no-fund
+          npm run audit:content
+          npm run typecheck
+          npm run lint
+          npm run test
+          npm run build
+
+      - name: Record GitHub-hosted verification
+        working-directory: /tmp/mnemora-project
+        shell: bash
+        run: |
+          cat >> QUALITY_GATE.md <<'EOF'
+
+          ## GitHub-hosted verification
+
+          The publication workflow installed all declared dependencies on Node.js 22 and passed the content audit, TypeScript typecheck, ESLint, Vitest, and the production Vite build before committing this source tree.
+          EOF
+
+      - name: Replace transport payload with normal source tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          find "$GITHUB_WORKSPACE" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -a /tmp/mnemora-project/. "$GITHUB_WORKSPACE"/
+          cd "$GITHUB_WORKSPACE"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Publish complete MNEMORA source and fixes"
+          git push origin HEAD:main
