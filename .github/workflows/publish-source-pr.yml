@@ -4,7 +4,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - '.publish-v2/pr-trigger'
+      - '.publish-v3/trigger'
 
 permissions:
   contents: write
@@ -27,50 +27,17 @@ jobs:
         with:
           node-version: 22
 
-      - name: Decode source payload with Node.js
+      - name: Reconstruct and verify complete source archive
         shell: bash
         run: |
           set -euo pipefail
-          node <<'NODE'
-          const fs = require('node:fs');
-          const path = require('node:path');
-          const dir = '.payload';
-          const chunks = fs.readdirSync(dir)
-            .filter((name) => /^chunk-\d+$/.test(name))
-            .sort((a, b) => a.localeCompare(b));
-          if (!chunks.length) throw new Error('No payload chunks found');
-          const encoded = chunks.map((name) => fs.readFileSync(path.join(dir, name), 'utf8')).join('');
-          const archive = Buffer.from(encoded, 'base64');
-          if (!archive.length) throw new Error('Decoded archive is empty');
-          fs.writeFileSync('/tmp/mnemora-source.tar.xz', archive);
-          console.log(`Decoded ${chunks.length} chunks into ${archive.length} bytes`);
-          NODE
-
-      - name: Verify and extract source payload
-        shell: bash
-        run: |
-          set -euo pipefail
+          test "$(find .publish-v3 -maxdepth 1 -name 'chunk-*' | wc -l)" -eq 5
+          cat .publish-v3/chunk-* > /tmp/mnemora-source.b64
+          base64 --decode /tmp/mnemora-source.b64 > /tmp/mnemora-source.tar.xz
+          echo "766010631205a93ddb529f31d6fdd5aaaa7b06b523578211f92a6d625b3dec6e  /tmp/mnemora-source.tar.xz" | sha256sum --check --strict
           xz --test /tmp/mnemora-source.tar.xz
           mkdir -p /tmp/mnemora-project
           tar -xJf /tmp/mnemora-source.tar.xz --strip-components=1 -C /tmp/mnemora-project
-          test -f /tmp/mnemora-project/src/main.tsx
-
-      - name: Decode and verify audited patch
-        shell: bash
-        run: |
-          set -euo pipefail
-          base64 --decode .publish-v2/patch.xz.b64 > /tmp/mnemora-v2.patch.xz
-          echo "4e851f8c654f47489c922d25408c425c1e458606fc91f835d9a4e6e0905d5818  /tmp/mnemora-v2.patch.xz" | sha256sum --check --strict
-          xz --decompress --stdout /tmp/mnemora-v2.patch.xz > /tmp/mnemora-v2.patch
-          test -s /tmp/mnemora-v2.patch
-
-      - name: Apply audited fixes
-        working-directory: /tmp/mnemora-project
-        shell: bash
-        run: |
-          set -euo pipefail
-          git apply --check /tmp/mnemora-v2.patch
-          git apply /tmp/mnemora-v2.patch
 
       - name: Verify complete content tree
         working-directory: /tmp/mnemora-project
@@ -79,7 +46,9 @@ jobs:
           set -euo pipefail
           test -f src/main.tsx
           test -f src/components/CodeLab.tsx
+          test -f src/features/code-runner/runner.ts
           test -f .github/workflows/ci.yml
+          test -f .github/workflows/deploy.yml
           test "$(find src/data/tracks -path '*/lessons/*.ts' | wc -l)" -eq 60
           test "$(find . -type f ! -path './node_modules/*' ! -path './dist/*' | wc -l)" -ge 119
 
@@ -101,7 +70,7 @@ jobs:
 
           ## GitHub-hosted verification
 
-          The pull-request publication workflow installed all declared dependencies on Node.js 22 and passed the content audit, TypeScript typecheck, ESLint, Vitest, and the production Vite build before committing this source tree.
+          The publication workflow installed all declared dependencies on Node.js 22 and passed the content audit, TypeScript typecheck, ESLint, Vitest, and the production Vite build before committing this source tree.
           EOF
 
       - name: Replace transport repository with complete project
