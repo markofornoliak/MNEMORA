@@ -32,12 +32,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          base='https://markofornoliak.github.io'
-          page="$base/MNEMORA/"
+          page='https://markofornoliak.github.io/MNEMORA/'
           for attempt in $(seq 1 60); do
             html="$(curl -fsSL --max-time 20 "$page" || true)"
-            asset="$(printf '%s' "$html" | grep -oE '/MNEMORA/assets/index-[^" ]+\.js' | head -n 1 || true)"
-            if [[ -n "$asset" ]] && curl -fsSL --max-time 30 "$base$asset" -o /tmp/mnemora-app.js; then
+            asset="$(printf '%s' "$html" | grep -oE 'assets/index-[^" ]+\.js' | head -n 1 || true)"
+            if [[ -n "$asset" ]] && curl -fsSL --max-time 30 "$page$asset" -o /tmp/mnemora-app.js; then
               if grep -Fq 'Interactive programming curriculum' /tmp/mnemora-app.js && grep -Fq 'learning observatory 2.0' /tmp/mnemora-app.js; then
                 echo "Live MNEMORA redesign verified at $page"
                 exit 0
