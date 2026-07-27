@@ -3,10 +3,6 @@ name: Deploy MNEMORA to GitHub Pages
 on:
   push:
     branches: [main]
-  pull_request:
-    types: [opened, synchronize, reopened]
-    paths:
-      - '.github-pages-trigger'
   workflow_dispatch:
 
 permissions:
