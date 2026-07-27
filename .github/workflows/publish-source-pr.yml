@@ -39,6 +39,17 @@ jobs:
           mkdir -p /tmp/mnemora-project
           tar -xJf /tmp/mnemora-source.tar.xz --strip-components=1 -C /tmp/mnemora-project
 
+      - name: Apply verified source fixes
+        working-directory: /tmp/mnemora-project
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 --decode "$GITHUB_WORKSPACE/.publish-v3/source-fixes.patch.xz.b64" > /tmp/mnemora-source-fixes.patch.xz
+          echo "784e1f96fcc828e96af4a4b42f3cbc4387c27e39e7b01152ba9fb56a056afe48  /tmp/mnemora-source-fixes.patch.xz" | sha256sum --check --strict
+          xz --decompress --stdout /tmp/mnemora-source-fixes.patch.xz > /tmp/mnemora-source-fixes.patch
+          git apply --check /tmp/mnemora-source-fixes.patch
+          git apply /tmp/mnemora-source-fixes.patch
+
       - name: Verify complete content tree
         working-directory: /tmp/mnemora-project
         shell: bash
