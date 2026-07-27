@@ -2,7 +2,6 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
-  CheckCircle2,
   Clock3,
   Code2,
   Crosshair,

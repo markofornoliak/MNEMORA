@@ -9,7 +9,6 @@ import {
   Clock3,
   Code2,
   Compass,
-  Cpu,
   Layers3,
   Orbit,
   Play,
