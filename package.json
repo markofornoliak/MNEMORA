@@ -4,14 +4,15 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "preinstall": "node bootstrap.mjs",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint . --max-warnings=0",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "audit:content": "node scripts/content-audit.mjs",
+    "check": "npm run audit:content && npm run typecheck && npm run lint && npm run test && npm run build"
   },
   "dependencies": {
     "@codemirror/lang-cpp": "^6.0.3",
