@@ -1,34 +1,73 @@
 import type { Lesson } from '../../../../types/course';
 
 const lesson: Lesson = {
-  id: "java-object-forge-01",
-  trackId: "java",
-  worldId: "object-forge",
+  id: 'java-object-forge-01',
+  trackId: 'java',
+  worldId: 'object-forge',
   order: 1,
-  title: "Точка запуска",
-  subtitle: "class и main",
-  duration: 16,
-  difficulty: "beginner",
-  objectives: ["Понять class и main", "Main", "Println"],
-  theory: [
-    { heading: "Сигнал: class и main", body: "В этом модуле вы изучаете class и main. В Java эта конструкция задаёт предсказуемый способ выразить намерение программы. Сначала прочитайте пример как последовательность состояний: какие данные существуют, какое действие происходит и какой наблюдаемый результат должен появиться.", code: "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"MNEMORA ONLINE\");\n    }\n}" },
-    { heading: "Модель мышления", body: "Не запоминайте синтаксис изолированно. Свяжите его с моделью MNEMORA: данные — это состояние прибора, операция — импульс, а вывод — измерение. Для темы «class и main» важно уметь объяснить каждую строку своими словами и предсказать результат до запуска." },
-    { heading: "Инженерная привычка", body: "После успешного запуска измените один параметр, затем снова спрогнозируйте результат. Такой микроскопический эксперимент формирует понимание причинности и помогает быстрее находить ошибки. Ключевые понятия урока: class, main, println." }
+  title: 'Точка запуска',
+  subtitle: 'Класс Main, метод main и жизненный цикл запуска',
+  duration: 20,
+  difficulty: 'beginner',
+  objectives: [
+    'Объяснить, зачем Java-программе нужен класс и метод main',
+    'Распознать сигнатуру public static void main(String[] args)',
+    'Вывести литерал и значение переменной через System.out.println'
   ],
-  starterCode: "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"MNEMORA ONLINE\");\n    }\n}",
-  expectedOutput: "MNEMORA ONLINE",
+  theory: [
+    {
+      heading: 'Java начинает выполнение с метода main',
+      body: 'JVM ищет точку входа с точной сигнатурой public static void main(String[] args). public делает метод доступным среде запуска, static позволяет вызвать его без создания объекта Main, void означает отсутствие возвращаемого значения, а args хранит аргументы командной строки.',
+      code: 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("MNEMORA ONLINE");\n    }\n}'
+    },
+    {
+      heading: 'Класс задаёт границу структуры',
+      body: 'Даже минимальная Java-программа находится внутри класса. Позже классы будут описывать объекты и правила предметной области, но уже сейчас они организуют код. Имя public-класса обычно совпадает с именем файла, поэтому в учебной среде используется Main.'
+    },
+    {
+      heading: 'Компиляция отделена от выполнения',
+      body: 'Сначала компилятор проверяет синтаксис и типы, затем создаёт bytecode. Только после этого JVM запускает main. Ошибка компиляции означает, что выполнение ещё не началось. Это важное различие: сначала исправляется структура программы, затем исследуется её поведение.',
+      code: 'String signal = "MNEMORA ONLINE";\nSystem.out.println(signal);'
+    }
+  ],
+  starterCode: 'public class Main {\n    public static void main(String[] args) {\n        String signal = "MNEMORA ONLINE";\n        System.out.println(signal);\n    }\n}',
+  expectedOutput: 'MNEMORA ONLINE',
   tasks: [
-    { id: "java-object-forge-01-task-1", title: "Восстановите основной сигнал", prompt: "Напишите программу по теме «class и main», которая выводит точный контрольный сигнал.", starterCode: "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"MNEMORA ONLINE\");\n    }\n}", solutionHint: "Сначала предскажите результат, затем меняйте только одну часть программы за раз.", validator: {"kind": "exact-output", "expected": "MNEMORA ONLINE"}, xp: 35 },
-    { id: "java-object-forge-01-task-2", title: "Измените параметры", prompt: "Сохраните изучаемую конструкцию, но добейтесь вывода «MNEMORA ONLINE».", starterCode: "public class Main {\n    public static void main(String[] args) {\n        // print a signal\n    }\n}", solutionHint: "Сначала предскажите результат, затем меняйте только одну часть программы за раз.", validator: {"kind": "contains-output", "expected": "MNEMORA ONLINE"}, xp: 45 },
-    { id: "java-object-forge-01-task-3", title: "Объясните через код", prompt: "Добавьте собственное имя переменной или функцию и сохраните ключевой результат «MNEMORA ONLINE».", starterCode: "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"MNEMORA ONLINE\");\n    }\n}", solutionHint: "Сначала предскажите результат, затем меняйте только одну часть программы за раз.", validator: {"kind": "contains-output", "expected": "MNEMORA ONLINE"}, xp: 55 }
+    {
+      id: 'java-object-forge-01-task-1',
+      title: 'Рабочая точка входа',
+      prompt: 'Внутри корректного метода main выведите ровно MNEMORA ONLINE.',
+      starterCode: 'public class Main {\n    public static void main(String[] args) {\n        // добавьте вывод\n    }\n}',
+      solutionHint: 'Используйте System.out.println с одной строкой-литералом.',
+      validator: { kind: 'exact-output', expected: 'MNEMORA ONLINE' },
+      xp: 35
+    },
+    {
+      id: 'java-object-forge-01-task-2',
+      title: 'Типизированный сигнал',
+      prompt: 'Создайте переменную String signal со значением MNEMORA ONLINE и выведите переменную.',
+      starterCode: 'public class Main {\n    public static void main(String[] args) {\n        String signal = "...";\n        // выведите signal\n    }\n}',
+      solutionHint: 'Объявление String фиксирует тип переменной, а println может получить её имя как аргумент.',
+      validator: { kind: 'contains-output', expected: 'MNEMORA ONLINE' },
+      xp: 45
+    },
+    {
+      id: 'java-object-forge-01-task-3',
+      title: 'Порядок инструкций',
+      prompt: 'Сначала выведите BOOT, затем MNEMORA ONLINE. Две строки должны появиться в указанном порядке.',
+      starterCode: 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("MNEMORA ONLINE");\n        // добавьте BOOT и исправьте порядок\n    }\n}',
+      solutionHint: 'Инструкции внутри main выполняются сверху вниз.',
+      validator: { kind: 'exact-output', expected: 'BOOT\nMNEMORA ONLINE' },
+      xp: 55
+    }
   ],
   bonusTask: {
-    id: "java-object-forge-01-bonus",
-    title: 'Аномалия созвездия',
-    prompt: "Расширьте решение урока «Точка запуска»: добавьте ещё один осмысленный шаг обработки и сохраните проверяемый результат. Код должен оставаться читаемым и объяснимым.",
-    starterCode: "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"MNEMORA ONLINE\");\n    }\n}",
-    solutionHint: 'Разбейте задачу на ввод, преобразование и наблюдаемый результат. Затем проверьте каждую часть отдельно.',
-    validator: {"kind": "contains-output", "expected": "MNEMORA ONLINE"},
+    id: 'java-object-forge-01-bonus',
+    title: 'Мини-отчёт запуска',
+    prompt: 'Создайте int checks со значением 3. Сначала выведите число 3, затем отдельной строкой MNEMORA ONLINE.',
+    starterCode: 'public class Main {\n    public static void main(String[] args) {\n        int checks = 3;\n        // выведите checks и статус\n    }\n}',
+    solutionHint: 'println принимает и числовые переменные, и строковые литералы.',
+    validator: { kind: 'exact-output', expected: '3\nMNEMORA ONLINE' },
     xp: 90,
     bonus: true
   }
