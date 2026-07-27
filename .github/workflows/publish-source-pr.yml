@@ -31,7 +31,10 @@ jobs:
         run: |
           set -euo pipefail
           test -n "$(find .payload -maxdepth 1 -name 'chunk-*' -print -quit)"
-          cat .payload/chunk-* | base64 --decode > /tmp/mnemora-source.tar.xz
+          : > /tmp/mnemora-source.tar.xz
+          for part in .payload/chunk-*; do
+            base64 --decode "$part" >> /tmp/mnemora-source.tar.xz
+          done
           test -s /tmp/mnemora-source.tar.xz
           xz --test /tmp/mnemora-source.tar.xz
 
