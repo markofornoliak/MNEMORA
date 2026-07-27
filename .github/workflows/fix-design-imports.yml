@@ -1,0 +1,33 @@
+name: Fix MNEMORA design imports
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '.design-fix-trigger'
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  fix:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'agent/design-content-v2'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - name: Remove unused icon imports
+        shell: bash
+        run: |
+          set -euo pipefail
+          sed -i '/^[[:space:]]*Cpu,$/d' src/pages/HomePage.tsx
+          sed -i '/^[[:space:]]*CheckCircle2,$/d' src/pages/LessonPage.tsx
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/pages/HomePage.tsx src/pages/LessonPage.tsx
+          git commit -m "Remove unused design imports"
+          git push origin HEAD:${{ github.head_ref }}
