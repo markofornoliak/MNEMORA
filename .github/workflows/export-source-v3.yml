@@ -1,0 +1,29 @@
+name: Export MNEMORA source v3
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '.export-source-v3-trigger'
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+      - name: Package source
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar --exclude=.git --exclude=node_modules --exclude=dist --exclude=.export-source-v3-trigger --exclude=.github/workflows/export-source-v3.yml -czf /tmp/mnemora-source-v3.tar.gz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mnemora-source-v3
+          path: /tmp/mnemora-source-v3.tar.gz
+          retention-days: 1
